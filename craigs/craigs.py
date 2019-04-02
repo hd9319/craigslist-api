@@ -6,24 +6,12 @@ import requests
 import lxml.html
 from datetime import datetime
 
-headers = {
-    'Connection': 'keep-alive',
-    'Cache-Control': 'max-age=0',
-    'Origin': 'https://accounts.craigslist.org',
-    'Upgrade-Insecure-Requests': '1',
-    'Content-Type': 'application/x-www-form-urlencoded',
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.86 Safari/537.36',
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
-    'Referer': 'https://accounts.craigslist.org/login',
-    'Accept-Encoding': 'gzip, deflate, br',
-    'Accept-Language': 'en-US,en;q=0.9',
-}
-
 class CraigsAPI:
     def __init__(self, path_to_categories):
         self.num_results_pp = 120
         self.domain = 'https://toronto.craigslist.org/'
         self.login_url = 'https://accounts.craigslist.org/login'
+        self.our_ads_url = 'https://accounts.craigslist.org/login/home'
         self.base_headers = {
             'Connection': 'keep-alive',
             'Cache-Control': 'max-age=0',
@@ -66,8 +54,8 @@ class CraigsAPI:
             return _get_categories_from_web(file_path)
 
     def login(self, username, password):
-        self.username = username
-        self.password = password
+        self._username = username
+        self._password = password
         _ = _refresh_session(username, password)
         pass
 
@@ -98,7 +86,14 @@ class CraigsAPI:
         return round((datetime.now() - datetime(1970, 1, 1)).total_seconds())
 
     def get_our_postings(self):
-        pass
+        headers = headers.copy()
+        response = self.session.get(self.our_ads_url, headers=headers)
+        if response:
+            content = lxml.html.fromstring(response.text)
+            postings = content.xpath('//section[@class="body"][0]//table[0]/li/text()')
+            return postings
+        else:
+            return None
 
     def post_our_ad(self):
         pass
